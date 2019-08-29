@@ -1,0 +1,59 @@
+##################################
+## 1 - data need to be formatted in matrices with element a_ij being the distance between sample i and sample j.
+## here, "distance" means either community dissimilarity (sorensen) or geographical distance or temporal distance or environmental distance...
+## here, "sample" means a sample at a given site and at a given date.
+##################################
+# let us consider that your data consists in a data.frame called original_data in which each line is a different sample and the different columns have the following names:
+# "x" and "y" for the geographic coordinates
+# "t" for the date of the sample
+# "J" for the number of individuals in the sample
+# "env1" and "env2" are two environmental variables measured for the sample (you may have more than 2 environmental variables or a single one)
+# and the following columns are the different species in the dataset, the value in each column being the number of individuals of this particular species present in the sample. (=0 if the species is not present)
+
+n_samples=dim(original_data)[1]
+n_col=dim(original_data)[2]
+mat_beta_sor=matrix(0,n_samples,n_samples) # the matrix of community dissimilarity
+mat_beta_env1=matrix(0,n_samples,n_samples) # the matrix of environmental distance for environmental variable 1
+mat_beta_env2=matrix(0,n_samples,n_samples) # the matrix of environmental distance for environmental variable 2
+mat_beta_geo=matrix(0,n_samples,n_samples) # the matrix of geographical distance
+mat_beta_t=matrix(0,n_samples,n_samples) # the matrix of temporal distance
+mat_delta_alpha=matrix(0,n_samples,n_samples) # the matrix of the absolute differences in species richness between the two samples i and j
+mat_mean_J=matrix(0,n_samples,n_samples) # the matrix of the mean community size (number of individuals) in sample i and j.
+mat_delta_J=matrix(0,n_samples,n_samples) # the matrix of the absolute differences in community size between the two samples i and j
+for (i in 1:(n_samples-1){
+  com1=original_data[i,7:n_col] ## NB : the number "7" will change if you have less or more than 2 environmental variables in your dataset.
+  x1=original_data$x[i]
+  y1=original_data$y[i]
+  s1=length(com1[com1>0])
+  for (j in (i+1):n_samples){
+    com2=original_data[j,7:n_col] ## NB : the number "7" will change if you have less or more than 2 environmental variables in your dataset.
+    x2=original_data$x[j]
+    y2=original_data$y[j]
+    s2=length(com2[com2>0])
+    prod=com1*com2
+    s3=length(prod[prod>0])
+    mat_beta_sor[i,j]=1-((2*s3)/(s1+s2))
+    mat_beta_env1[i,j]=abs(original_data$env1[i]-original_data$env1[j])
+    mat_beta_env2[i,j]=abs(original_data$env2[i]-original_data$env2[j])
+    mat_beta_t[i,j]=abs(original_data$t[i]-original_data$t[j])
+    mat_delta_alpha[i,j]=abs(s1-s2)
+    mat_mean_J[i,j]=0.5*(original_data$J[i]+original_data$J[j])
+    mat_delta_J[i,j]=abs(original_data$J[i]-original_data$J[j])
+    mat_beta_geo[i,j]=log(sqrt((x1-x2)^2+(y1-y2)^2)) # here, we have log-transformed the geographical distance, you may choose not to do so.
+  }
+}
+mat_beta_sor=mat_beta_sor+t(mat_beta_sor)
+mat_beta_env1=mat_beta_env1+t(mat_beta_env1)
+mat_beta_env2=mat_beta_env2+t(mat_beta_env2)
+mat_beta_geo=mat_beta_geo+t(mat_beta_geo)
+mat_beta_t=mat_beta_t+t(mat_beta_t)
+mat_delta_alpha=mat_delta_alpha+t(mat_delta_alpha)
+mat_mean_J=mat_mean_J+t(mat_mean_J)
+mat_delta_J=mat_delta_J+t(mat_delta_J)
+
+##################################
+## 2 - the different matrices then need to be grouped in a list
+##################################
+data_list=list(beta_sor=mat_beta_sor,meanJ=mat_mean_J,deltaalpha=mat_delta_alpha,deltat=mat_beta_t,deltaenv1=mat_beta_env1,deltaenv2=mat_beta_env2,deltax=mat_beta_geo,deltaJ=mat_delta_J)
+
+

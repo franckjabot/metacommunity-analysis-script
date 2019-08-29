@@ -1,0 +1,38 @@
+# 1 - load the data - they can be found on Zenodo : 
+##################################################################################################
+
+load("Fish.Rdata")
+load("Fish_for_permutation.Rdata")
+
+# 2 - load the R package lavaan to run the path analysis
+########################################################
+
+library(lavaan)
+
+# 3 - define the path model
+###########################
+
+sem_model<-'beta_sor ~ a*meanJ + b*deltaalpha + c*deltat + d*deltax+ e*deltaenv1 + f*deltaenv2 + g*deltaenv3 + h*deltaenv4 + i*deltaenv5 + j*deltaenv6
+            deltaalpha ~ k*deltaJ
+            deltaenv1 ~ l*deltat + m*deltax
+            deltaenv2 ~ n*deltax
+            deltaenv3 ~ o*deltax
+            deltaenv4 ~ p*deltax
+            deltaenv5 ~ q*deltax
+            deltaenv6 ~ r*deltax'
+
+
+# 4 - run the path analysis
+###########################
+data_fit <- sem(sem_model, data = data_t,std.ov=T)
+standardizedSolution(data_fit) ## the colum "est.std" corresponds to the path coefficients reported in Table S11 of Jabot F, Laroche F, Massol F, Arthaud F, Crabot J, Dubart M, Blanchet S, Munoz F, David P,and Datry T. Assessing metacommunity processes through signatures in spatiotemporal turnover of community composition. bioRxiv 480335, ver. 3 peer-reviewed and recommended by PCI Ecology (2019).
+fitMeasures(data_fit, "SRMR") ## this is the fit measure reported in Fig. 4a of this same paper
+
+# 5 - run the permutation-based path analysis to get p-values
+#############################################################
+source("permutation_based_pathanalysis.R") ## for details, see Fourtune, L., Prunier, J. G., Paz-Vinas, I., Loot, G., Veyssière, C., & Blanchet, S. (2018). Inferring causalities in landscape genetics: An extension of Wright’s causal modeling to distance matrices. The American Naturalist, 191, 491-508.
+set.seed(2018)
+permpath=permutation.based.pathanalysis(sem_model, data_listln, nperm = 1000, verb = T)
+permpath
+
+
